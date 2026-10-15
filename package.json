@@ -1,0 +1,29 @@
+{
+  "name": "crepuscule-slog",
+  "version": "1.0.0",
+  "description": "Local Office file compiler - paste the script an LLM wrote, get a real .docx/.xlsx/.pptx",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test \"tests/*.test.js\"",
+    "test:browser": "node tests/browser/run.js"
+  },
+  "keywords": [
+    "docx",
+    "xlsx",
+    "pptx",
+    "office",
+    "openxml",
+    "llm"
+  ],
+  "author": "Manish Majhi",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "docx": "^8.5.0",
+    "exceljs": "^4.4.0",
+    "pptxgenjs": "^3.12.0"
+  }
+}

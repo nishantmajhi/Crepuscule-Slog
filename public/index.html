@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="favicon.js"></script>
+    <title>Crepuscule Slog</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Browsers (and this page) don't have Node's setImmediate, but docx's
+    bundled zip engine calls it unconditionally to schedule async work.
+    Polyfill it before any library loads, the same way most bundlers do. -->
+    <script>
+      if (typeof window.setImmediate !== "function") {
+        window.setImmediate = function (fn, ...args) {
+          return window.setTimeout(fn, 0, ...args);
+        };
+        window.clearImmediate = function (id) {
+          window.clearTimeout(id);
+        };
+      }
+    </script>
+
+    <!-- JSZip: used by XML mode to assemble Office Open XML zips in-browser -->
+    <!-- docx / exceljs / pptxgenjs run server-side via the Crepuscule Slog Node server  -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- file-saver: triggers the browser download after compilation -->
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <h1>Crepuscule Slog</h1>
+          <div class="tagline">code in → office file out</div>
+        </div>
+        <div class="byline">
+          Didn't like waiting;<br />Paying was not an option!
+        </div>
+      </header>
+
+      <p class="intro">
+        A .docx, .xlsx, or .pptx is just a zip of XML wearing a costume. Claude
+        can write the code that builds one - but a chat session can't always
+        finish the build itself. Paste that code and get the finished file.
+      </p>
+
+      <div class="tabs" role="tablist">
+        <button
+          class="tab active"
+          data-fmt="docx"
+          role="tab"
+          aria-selected="true"
+        >
+          <span class="dot"></span> Word <span class="fmt-ext">.docx</span>
+        </button>
+        <button class="tab" data-fmt="xlsx" role="tab" aria-selected="false">
+          <span class="dot"></span> Excel <span class="fmt-ext">.xlsx</span>
+        </button>
+        <button class="tab" data-fmt="pptx" role="tab" aria-selected="false">
+          <span class="dot"></span> PowerPoint
+          <span class="fmt-ext">.pptx</span>
+        </button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-label" id="panel-label"
+            >Paste the script Claude generated</span
+          >
+          <span class="lib-pill-wrap">
+            <select
+              class="mode-select"
+              id="mode-select"
+              aria-label="Input mode"
+            >
+              <option value="npm">expects: docx (npm)</option>
+              <option value="xml">expects: docx (XML)</option>
+            </select>
+          </span>
+        </div>
+
+        <textarea
+          id="code-input"
+          spellcheck="false"
+          placeholder="Loading example…"
+        ></textarea>
+
+        <div class="row">
+          <button class="btn" id="compile-btn" style="--accent: var(--word)">
+            ▶ Compile
+          </button>
+          <button class="btn-ghost" id="example-btn">Load example</button>
+          <button class="btn-ghost" id="clear-btn">Clear</button>
+          <span class="filename-field">
+            save as
+            <input id="filename-input" type="text" value="output.docx" />
+          </span>
+        </div>
+
+        <div class="log" id="log"></div>
+        <div class="result" id="result">
+          <div class="msg" id="result-msg"></div>
+          <button class="btn-ghost" id="retry-btn" style="display: none">
+            Show error detail
+          </button>
+        </div>
+      </div>
+
+      <div class="howsection">
+        <h2>How this avoids re-running Claude</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="n">01 - Skill writes JS</div>
+            <p>
+              Claude's docx/xlsx/pptx skills already generate plain Node scripts
+              using the <code>docx</code>, <code>exceljs</code>, or
+              <code>pptxgenjs</code> packages. That script is the entire file -
+              nothing else is needed to rebuild it.
+            </p>
+          </div>
+          <div class="step">
+            <div class="n">02 - Crepuscule Slog loads the same libraries</div>
+            <p>
+              This page pulls the identical browser-compatible builds of those
+              packages from a CDN, once, and keeps them in memory for the tab.
+            </p>
+          </div>
+          <div class="step">
+            <div class="n">03 - Your code runs locally</div>
+            <p>
+              Pasted code executes right here against those libraries. No server
+              round-trip, no second Claude session, no extra inference cost.
+            </p>
+          </div>
+        </div>
+        <p class="note">
+          <b>npm mode:</b> paste the script as Claude wrote it for that skill -
+          a Node-style file ending in something like
+          <code>Packer.toBuffer(doc)</code> (docx),
+          <code>workbook.xlsx.writeBuffer()</code> (xlsx), or
+          <code>pptx.writeFile(...)</code> /
+          <code>pptx.write(...)</code> (pptx). Crepuscule Slog intercepts the save call and
+          turns it into a download instead of a filesystem write.<br /><br />
+          <b>XML mode:</b> if Claude got stuck and left raw XML instead of a
+          script, switch to the XML option in the dropdown and paste the XML
+          directly - Crepuscule Slog wraps it in a minimal Office Open XML zip and
+          downloads the finished file.
+        </p>
+      </div>
+
+      <footer>
+        <span>Crepuscule Slog by Manish Majhi x Claude</span>
+        <span>Node · docx 8.5.0 · exceljs 4.4.0 · pptxgenjs 3.12.0</span>
+      </footer>
+    </div>
+
+    <script src="crepuscule-slog.js"></script>
+  </body>
+</html>

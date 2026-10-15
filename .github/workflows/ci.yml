@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The runner exits 0 with "SKIP" when it finds no browser, which would
+      # read as a pass here, so a skip fails the job.
+      # The page loads JSZip and FileSaver from their CDNs, as the real page
+      # does, so this job needs the network; a runner has it.
+      - name: Browser suite
+        run: |
+          npm run test:browser | tee browser.log
+          ! grep -q '^SKIP' browser.log
